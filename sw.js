@@ -1,4 +1,4 @@
-const CACHE = 'ruyan-v5';
+const CACHE = 'ruyan-v6';
 
 // On install — activate immediately
 self.addEventListener('install', () => self.skipWaiting());

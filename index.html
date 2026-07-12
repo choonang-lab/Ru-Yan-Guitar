@@ -225,6 +225,7 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
   <button class="metro-fab" id="metroFab" onclick="Metro.fab()" aria-label="Metronome">⏱</button>
 </div>
 <div class="toast" id="toast"></div>
+<script src="ruyan-song.js"></script>
 <script>
 const MODULES=[
 {n:1,t:'The Barre Foundation',g:'This version is played in A with no capo, so it lives on barre chords. Build them first — every section below depends on a clean, reliable barre.',lessons:[
@@ -252,11 +253,11 @@ const MODULES=[
   tasks:['Form A, D, E, G, Am; pick-check each rings.','One-minute changes: A to D, D to E, A to E.','Add G to Am.'],
   stds:['All five clean from memory.','15+ clean changes/min on A-D, D-E, A-E.']},
  {id:'2.2',t:'Verse Progression',f:'The page-1 verse changes \u2014 open shapes mixed with the barres.',tempo:'70 bpm',covers:'Tab p.1 (verse)',
-  tasks:['Loop the verse chord order from your tab (A \u2013 D \u2013 A \u2013 Bm7 ... D \u2013 A \u2013 #Cm \u2013 Bm7).','One chord per bar at 70 bpm, no stops.','Isolate any change that drags (usually into #Cm) for a minute, then rejoin.'],
-  stds:['Verse chord loop at 70 bpm with no stops.','Barre landings (Bm7, #Cm) ring on arrival, not a beat late.']},
+  tasks:['Loop the verse chord order from your tab (A \u2013 D \u2013 A \u2013 Bm7 ... D \u2013 A \u2013 C#m \u2013 Bm7).','One chord per bar at 70 bpm, no stops.','Isolate any change that drags (usually into C#m) for a minute, then rejoin.'],
+  stds:['Verse chord loop at 70 bpm with no stops.','Barre landings (Bm7, C#m) ring on arrival, not a beat late.']},
  {id:'2.3',t:'Chorus Progression',f:'The page-2 chorus changes, including three barres in a row.',tempo:'70 bpm',covers:'Tab p.2 (chorus)',
-  tasks:['Loop the chorus order from your tab (D \u2013 E \u2013 A / E \u2013 #Cm \u2013 #Fm \u2013 Bm / D \u2013 E).','One chord per bar at 70 bpm.','Drill the #Cm \u2013 #Fm \u2013 Bm run on its own \u2014 three barre chords back to back.'],
-  stds:['Chorus loop at 70 bpm.','The #Cm \u2013 #Fm \u2013 Bm barre run is clean and in time.']},
+  tasks:['Loop the chorus order from your tab (D \u2013 E \u2013 A / E \u2013 C#m \u2013 F#m \u2013 Bm / D \u2013 E).','One chord per bar at 70 bpm.','Drill the C#m \u2013 F#m \u2013 Bm run on its own \u2014 three barre chords back to back.'],
+  stds:['Chorus loop at 70 bpm.','The C#m \u2013 F#m \u2013 Bm barre run is clean and in time.']},
  {id:'cpB',cp:true,t:'Checkpoint \u2014 Changes in Time',f:'Show the progressions hold together against a click.',covers:'Module 2',
   rec:['Record the verse loop, then the chorus loop, both to a 70 bpm metronome (let the click be audible).'],
   stds:['Changes land on the beat, no dead bars.','Barres ring through the changes.']},
@@ -291,7 +292,7 @@ const MODULES=[
   tasks:['Play chorus 1 with the strum pattern.','Let it open up fuller than the verse \u2014 that contrast carries the song solo.'],
   stds:['Through at 80 bpm with an audible lift in energy from the verse.']},
  {id:'5.2',t:'The Next Choruses',f:'The following chorus variants (pages 2\u20133).',tempo:'82 bpm',covers:'Tab p.2\u20133',
-  tasks:['Play the next chorus sections in sequence.','Keep the #Cm \u2013 #Fm \u2013 Bm run clean underneath the strum.'],
+  tasks:['Play the next chorus sections in sequence.','Keep the C#m \u2013 F#m \u2013 Bm run clean underneath the strum.'],
   stds:['Through at 82 bpm with the barre run intact.']},
  {id:'cpE',cp:true,t:'Checkpoint \u2014 A Chorus',f:'A full chorus, recorded.',covers:'Module 5',
   rec:['Record one complete chorus at performance feel.'],
@@ -480,20 +481,27 @@ function renderRef(){
   {n:'F',s:'barre \u00B7 fr1',d:chordSVG([[1,3],[2,3],[3,2]],[],[],{fret:1,from:0,to:5})},
   {n:'C',s:'bridge (C key)',d:chordSVG([[1,3],[2,2],[4,1]],[3,5],[0])},
  ];
+ // Road-map chords are DERIVED from the shared song data (ruyan-song.js), so they
+ // can never drift from what the player actually plays. Each phase names the song
+ // sections it spans via a predicate; distinct chords are pulled in first-use order.
+ const chordsWhere=pred=>{const seen=[];(window.RUYAN_SONG?window.RUYAN_SONG.sections:[]).forEach((s,i)=>{if(pred(s,i))s.chords.forEach(c=>{if(seen.indexOf(c[0])<0)seen.push(c[0]);});});return seen;};
+ const fmtChords=a=>a.length?' <b>'+a.join(' · ')+'</b>':'';
  const road=[
-  {t:'Intro',c:'',b:'Key A. Percussive muted strum + open-string figure. <b>A \u00B7 Bm7</b>'},
-  {t:'Verses',c:'',b:'Key A, picking + strum with melody on top. <b>A \u00B7 D \u00B7 Bm7 \u00B7 #Cm</b>'},
-  {t:'Choruses',c:'',b:'Key A, driving strum, three barres in a row. <b>D \u00B7 E \u00B7 A \u00B7 #Cm \u00B7 #Fm \u00B7 Bm</b>'},
-  {t:'Bridge',c:'c',b:'Modulates up \u2014 转1=C调. New shapes: <b>C \u00B7 F \u00B7 G \u00B7 Am \u00B7 D \u00B7 E</b>'},
-  {t:'Return',c:'c',b:'Modulates back \u2014 转1=A调, into the back-half choruses.'},
-  {t:'Back-half',c:'',b:'Key A choruses, escalating. <b>#Cm \u00B7 #Fm \u00B7 Bm \u00B7 D \u00B7 E</b>'},
-  {t:'Climax',c:'peak',b:'Full intensity, then a controlled drop into the outro.'},
-  {t:'Outro',c:'peak',b:'Key A, delicate picked fade. <b>Bm7 \u00B7 D \u00B7 A</b>'},
+  {t:'Intro',c:'',d:'Key A. Percussive muted strum + open-string figure.',p:s=>/Intro|间奏/.test(s.name)},
+  {t:'Verses',c:'',d:'Key A, picking + strum with melody on top.',p:s=>/Verse/.test(s.name)},
+  {t:'Choruses',c:'',d:'Key A, driving strum, three barres in a row.',p:s=>/Pre-chorus|Chorus 1|Chorus 2/.test(s.name)},
+  {t:'Bridge',c:'c',d:'Modulates up — 转1=C调. New shapes:',p:s=>s.key==='C'},
+  {t:'Return',c:'c',d:'Modulates back — 转1=A调, into the back-half choruses.',p:null},
+  {t:'Back-half',c:'',d:'Key A choruses, escalating.',p:s=>/Chorus 3|Chorus 4/.test(s.name)},
+  {t:'Climax',c:'peak',d:'Full intensity, then a controlled drop into the outro.',p:null},
+  {t:'Outro',c:'peak',d:'Key A, delicate picked fade.',p:s=>/Outro|告别|如烟/.test(s.name)},
  ];
+ // dev tripwire: every chord the song uses must have a diagram above
+ (function(){const have=new Set(C.map(x=>x.n));const used=new Set();(window.RUYAN_SONG?window.RUYAN_SONG.sections:[]).forEach(s=>s.chords.forEach(c=>used.add(c[0])));const miss=[...used].filter(n=>!have.has(n));if(miss.length)console.warn('[Mastery Path] song uses chords with no diagram:',miss.join(', '));})();
  return '<div class="mod-head"><div class="mtag">Reference</div><h2>Chords & Road Map</h2><p>The 王一编配 arrangement, key of A, no capo. These are the real shapes \u2014 barres included. The chord progressions live in your tab; this is the orientation.</p></div>'+
  '<div class="bcard"><div class="bcard-title">The shapes</div><div class="bcard-sub">no capo \u00B7 \u25EF open \u00B7 \u00D7 muted \u00B7 green bar = barre \u00B7 Nfr = start fret</div><div class="chord-grid">'+C.map(c=>'<div class="chord-box"><div class="cname">'+c.n+'</div>'+c.d+'<div class="csub">'+c.s+'</div></div>').join('')+'</div><p style="font-size:0.74rem;color:var(--muted);margin-top:12px;line-height:1.5">Five barre chords (Bm, Bm7, F#m, C#m, F) carry this version \u2014 Module 1 builds them. <b>Bm7</b> is the lighter stand-in for Bm while the barre develops.</p></div>'+
- '<div class="bcard"><div class="bcard-title">The road map</div><div class="bcard-sub">A \u2192 C \u2192 A, through-composed</div><div class="road">'+road.map(r=>'<div class="road-row"><span class="road-tag '+r.c+'">'+r.t+'</span><span class="road-body">'+r.b+'</span></div>').join('')+'</div></div>'+
- '<div class="bcard"><div class="bcard-title">What makes this version hard</div><div class="bcard-sub">why the modules are ordered this way</div><ul><li>No capo \u2014 it lives on barre chords, so the barre is the first gate</li><li>Three barres in a row in the chorus (#Cm \u2013 #Fm \u2013 Bm)</li><li>Two key changes: up to C for the bridge, back to A after</li><li>Melody notes sit on top of the strum in the verses</li><li>A percussive muted-strum groove opens the song</li></ul></div>';
+ '<div class="bcard"><div class="bcard-title">The road map</div><div class="bcard-sub">A \u2192 C \u2192 A, through-composed</div><div class="road">'+road.map(r=>'<div class="road-row"><span class="road-tag '+r.c+'">'+r.t+'</span><span class="road-body">'+(r.d+(r.p?fmtChords(chordsWhere(r.p)):''))+'</span></div>').join('')+'</div></div>'+
+ '<div class="bcard"><div class="bcard-title">What makes this version hard</div><div class="bcard-sub">why the modules are ordered this way</div><ul><li>No capo \u2014 it lives on barre chords, so the barre is the first gate</li><li>Three barres in a row in the chorus (C#m \u2013 F#m \u2013 Bm)</li><li>Two key changes: up to C for the bridge, back to A after</li><li>Melody notes sit on top of the strum in the verses</li><li>A percussive muted-strum groove opens the song</li></ul></div>';
 }
 function renderProg(){
  const totL=FLAT.length;const doneL=FLAT.filter(isMastered).length;const pct=Math.round(doneL/totL*100);

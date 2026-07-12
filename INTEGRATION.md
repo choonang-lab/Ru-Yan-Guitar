@@ -45,8 +45,14 @@ Section names are the join key, so they must match exactly across both apps — 
 - Metronome added to the Mastery Path (Web-Audio click, look-ahead scheduler, tap tempo; lesson tempo chips launch it at their target BPM).
 - Bridge chords reconciled to the Sheet Player's crop-verified reading (`D`, not `Dm`).
 
-### Phase 1 — one source of truth for the song *(highest value, low risk)*
-Extract `SONG` + the "expand to full song form" rebuild out of `sheet-player/index.html` into a standalone `ruyan-song.js` that both apps load:
+### Phase 1 — one source of truth for the song — **done**
+Extracted `SONG` + the "expand to full song form" rebuild out of `sheet-player/index.html` into a standalone `ruyan-song.js` that both apps load. The canonical copy lives in the `sheet-player` repo; this repo vendors a mirror (same file, header marked). What shipped:
+- **Sheet Player** loads `ruyan-song.js` via `<script src>` instead of an inline literal.
+- **Mastery Path** loads the same file and now **derives the road-map chords from it** (per-phase section predicates → distinct chords), so the road map can't drift from the player. A dev tripwire warns if the song ever uses a chord with no diagram.
+- **Bug found + fixed while extracting:** chord names were written `#Cm`/`#Fm`, but the player's `chordNotes()` parses `/^([A-G][#b]?)/` — so those returned `[]` and **produced no sound** across 9 sections (16 chord instances). Normalized to `C#m`/`F#m`; all 10 chords now sound, and the names match this app's diagrams.
+- The bridge road line is now the data-true `D · E · F · Am · G` (the phantom `C` it used to show isn't strummed there — it's only the key tonic, still available as a diagram).
+
+Original plan, for reference:
 
 ```js
 // ruyan-song.js
