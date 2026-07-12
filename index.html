@@ -187,6 +187,16 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 .metro-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
 .chip.tempo.metro-launch{cursor:pointer;border-style:solid;}
 .chip.tempo.metro-launch:hover{background:var(--amber);color:#fff;}
+/* ---- hear-this-section (embedded player) ---- */
+.hear-btn{cursor:pointer;font-family:inherit;font-weight:700;font-size:0.72rem;padding:6px 11px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:var(--radius-sm);}
+.hear-btn:hover{background:#145535;}
+.player-modal{display:none;position:fixed;inset:0;z-index:940;background:var(--bg);flex-direction:column;}
+.player-modal.open{display:flex;}
+.player-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(env(safe-area-inset-top) + 12px) 18px 12px;background:var(--surface);border-bottom:1px solid var(--border);font-weight:700;font-size:0.85rem;}
+.player-head .ph-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.player-head .ph-sub{font-size:0.62rem;color:var(--muted);font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:6px;}
+.player-head button{flex:none;border:1.5px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:var(--radius-sm);padding:7px 14px;font-family:inherit;font-weight:700;font-size:0.72rem;cursor:pointer;}
+.player-modal iframe{flex:1;width:100%;border:none;background:#0f1115;}
 </style>
 </head>
 <body>
@@ -223,6 +233,13 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
     </div>
   </div>
   <button class="metro-fab" id="metroFab" onclick="Metro.fab()" aria-label="Metronome">⏱</button>
+</div>
+<div class="player-modal" id="playerModal">
+  <div class="player-head">
+    <span class="ph-title"><span id="playerTitle">Section</span><span class="ph-sub" id="playerSub"></span></span>
+    <button onclick="closePlayer()">✕ Close</button>
+  </div>
+  <iframe id="playerFrame" title="Sheet Player" allow="autoplay"></iframe>
 </div>
 <div class="toast" id="toast"></div>
 <script src="ruyan-song.js"></script>
@@ -398,7 +415,8 @@ function openLesson(id,keep){const __det=document.getElementById('detail');const
  curId=id;const l=lessonById(id);const s=st(id);const mod=MODULES.find(m=>m.lessons.some(x=>x.id===id));
  document.getElementById('dCrumb').textContent='Module '+mod.n+' \u00B7 '+(l.cp?'Checkpoint':'Lesson '+id);
  const meta=(l.tempo&&l.tempo!=='\u2014'?'<button class="chip tempo metro-launch" onclick="Metro.start('+parseInt(l.tempo,10)+')" title="Start metronome at this tempo">\u266A '+l.tempo+' \u00B7 click</button>':'')+(l.covers?'<span class="chip '+(l.cp?'cp':'covers')+'">'+l.covers+'</span>':'');
- let h='<div class="d-title">'+l.t+'</div><div class="d-focus">'+l.f+'</div><div class="d-meta">'+meta+'</div>';
+ const hear=(!l.cp&&typeof SECTION_MAP!=='undefined'&&SECTION_MAP[l.id])?'<button class="hear-btn" onclick="hearSection(\''+l.id+'\')" title="Play this section, looped, chords only">▶ Hear this section</button>':'';
+ let h='<div class="d-title">'+l.t+'</div><div class="d-focus">'+l.f+'</div><div class="d-meta">'+meta+hear+'</div>';
  if(l.cp){
   h+='<div class="d-section"><div class="d-h cp">What to record</div>'+l.rec.map(r=>'<div class="item"><div class="item-text">'+r+'</div></div>').join('')+'</div>';
   h+='<div class="d-section"><div class="cp-note">\uD83D\uDCE4 <b>Send the recording to Claude in chat.</b> I will analyse timing, tempo steadiness, dynamics and note clarity, and review any hand-position photos \u2014 then give specific feedback. Paste the key points below so this checkpoint keeps a record.</div></div>';
@@ -518,6 +536,44 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 function doExport(){const blob=new Blob([JSON.stringify({lessons:S,exported:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ruyan-mastery-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();showToast('Backup downloaded');}
 function doImport(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.lessons){S=d.lessons;persist();render();showToast('Progress restored');}}catch(e){showToast('Could not read that file');}};r.readAsText(f);ev.target.value='';}
 function doReset(){if(!confirm('Erase all progress and start the path fresh? Export a backup first if unsure.'))return;S={};persist();render();showToast('Progress reset');}
+
+/* ---- Hear this section: embed the bundled Sheet Player (Phase 3) ----
+   Each lesson maps to the song section(s) it covers, by name substring matched
+   against the shared song data. The player opens looped + chords-only at the
+   lesson's tempo. {from} is a single section; {from,to} a contiguous range. */
+const SECTION_MAP={
+  '3.3':{from:'Intro'},
+  '4.1':{from:'Verse 1'},
+  '4.2':{from:'Verse 2'},
+  '5.1':{from:'Chorus 1'},
+  '5.2':{from:'Chorus 2'},
+  '6.1':{from:'耳际眼前'},
+  '6.2':{from:'来自漆黑'},
+  '6.3':{from:'玫瑰'},
+  '7.1':{from:'花瓣'},
+  '7.2':{from:'苦痛'},
+  '8.1':{from:'已经如烟'},
+  '9.1':{from:'Intro',to:'Chorus 2'},
+  '9.2':{from:'耳际眼前',to:'已经如烟'},
+  '9.3':{from:'Intro',to:'已经如烟'},
+  '9.4':{from:'Intro',to:'已经如烟'}
+};
+function hearSection(id){
+  const m=SECTION_MAP[id]; if(!m) return;
+  const l=lessonById(id); const bpm=parseInt(l.tempo,10)||76;
+  const hash='#section='+encodeURIComponent(m.from)+(m.to?'&to='+encodeURIComponent(m.to):'')
+            +'&bpm='+bpm+'&chordsOnly=1&loop=1&embed=1';
+  document.getElementById('playerFrame').src='player/index.html'+hash;
+  document.getElementById('playerTitle').textContent=l.t;
+  document.getElementById('playerSub').textContent='▶ press Play · '+bpm+' bpm · chords · loop';
+  document.getElementById('playerModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePlayer(){
+  document.getElementById('playerModal').classList.remove('open');
+  document.getElementById('playerFrame').src='about:blank';   // tears down the iframe -> stops audio
+  document.body.style.overflow='';
+}
 /* ---- metronome: Web Audio click with a look-ahead scheduler ---- */
 const Metro=(function(){
  let ac=null,timer=null,nextT=0,beat=0,BPM=80,BEATS=4,on=false,taps=[];

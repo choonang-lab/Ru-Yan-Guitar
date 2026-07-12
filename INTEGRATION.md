@@ -64,8 +64,16 @@ window.RUYAN_SONG = { title:'如烟 · 五月天', key:'A', bpm:76, beatsPerBar:
 
 After this, a chord change edited once shows up correctly in both apps. **This is the durable fix for the divergence class of bug.**
 
-### Phase 2 — give the player a control API
-Teach `sheet-player` to accept a launch state via URL hash (cheapest) or `postMessage` (cleaner for an embed):
+### Phase 2 — give the player a control API — **done**
+The player accepts a launch state via URL hash **and** a `postMessage` command channel:
+- Hash: `#section=Chorus%201&bpm=70&chordsOnly=1&loop=1&autoplay=1` (also `index=`, `to=` for a range, `melodyOnly=`, `through=`, `embed=`). Applies tempo/track toggles, scrolls to the section, best-effort autoplay.
+- `play(song, fromSec, opts)` gained `opts.toSec` (scope to a section/range) and `opts.loop`.
+- `postMessage`: parent sends `{type:"sheet-player",cmd:"play"|"stop"|"config",…}`; player posts back `{event:"ready"|"playing"|"stopped",…}`.
+- A scoped launch rebinds the player's own Play button to replay that scope (a real in-frame tap → audio allowed even when iframe autoplay is blocked).
+- **Embed mode**: framed (or `#embed=1`) hides the authoring UI (sample loader, drop zone, JSON editor).
+- Fixed en route: `#Cm`/`#Fm` silent-chord bug (Phase 1) and the Stop button passing its event object into `stop(silent)`.
+
+Original sketch, for reference:
 
 ```js
 // in sheet-player play/init
@@ -81,8 +89,10 @@ if (secName) {
 ```
 Add a `loop` flag: when the transport reaches the end of the target section, restart it (small change to the `stop`-scheduling at the tail of `play()`).
 
-### Phase 3 — embed the player inside each lesson
-In the Mastery Path lesson detail, add a **"▶ Hear this section"** button next to the existing "♪ … · click" metronome chip. It opens the player in a modal iframe, scoped to the lesson's mapped section, **chords-only** (accompaniment focus) at the lesson's tempo:
+### Phase 3 — embed the player inside each lesson — **done**
+The player is **bundled into this repo** under `player/` (vendored mirror of `sheet-player`, sharing `../ruyan-song.js`) so it's same-origin and ships on the public Pages site. Each mapped lesson detail shows a **"▶ Hear this section"** button that opens the player in a full-screen modal iframe, scoped to the lesson's section via `SECTION_MAP` (name-substring matched), **chords-only + looped** at the lesson's tempo. Closing tears the iframe down (stops audio). Verified end-to-end: button → modal → embed-mode player scoped to the section → in-frame Play drives the transport → Close tears down; no console errors.
+
+Original sketch, for reference:
 
 ```js
 function hearSection(id){
