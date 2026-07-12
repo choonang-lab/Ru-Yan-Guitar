@@ -165,6 +165,28 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
   .l-title{font-size:1rem;}
   .l-focus{font-size:0.82rem;}
 }
+/* ---- metronome ---- */
+.metro{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:950;font-family:inherit;}
+.metro-fab{width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;border:none;box-shadow:var(--shadow-lg);cursor:pointer;font-size:1.4rem;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
+.metro-fab:active{transform:scale(.93);}
+@keyframes metroPulse{0%{box-shadow:0 0 0 0 rgba(26,107,69,.55),var(--shadow-lg);}70%{box-shadow:0 0 0 13px rgba(26,107,69,0),var(--shadow-lg);}100%{box-shadow:0 0 0 0 rgba(26,107,69,0),var(--shadow-lg);}}
+.metro-fab.on{animation:metroPulse 1s infinite;}
+.metro-panel{display:none;position:absolute;right:0;bottom:64px;width:236px;background:var(--surface);border:1.5px solid var(--border2);border-radius:14px;box-shadow:var(--shadow-lg);padding:14px;}
+.metro-panel.open{display:block;}
+.metro-row{display:flex;align-items:center;gap:9px;}
+.metro-bpm-big{font-size:1.9rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--text);line-height:1;}
+.metro-bpm-big em{font-size:0.66rem;color:var(--muted);font-weight:600;font-style:normal;margin-left:4px;}
+.metro-beats{display:flex;gap:6px;margin-left:auto;}
+.metro-dot{width:10px;height:10px;border-radius:50%;background:var(--border2);transition:background .04s,transform .04s;}
+.metro-dot.beat{background:var(--accent);transform:scale(1.4);}
+.metro-dot.accent.beat{background:var(--amber);}
+.metro-slider{flex:1;accent-color:var(--accent);}
+.metro-btn{font-family:inherit;font-weight:700;font-size:0.82rem;padding:9px 12px;border:1.5px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:8px;cursor:pointer;}
+.metro-btn.sm{width:36px;padding:9px 0;font-size:1.05rem;text-align:center;}
+.metro-btn.grow{flex:1;}
+.metro-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.chip.tempo.metro-launch{cursor:pointer;border-style:solid;}
+.chip.tempo.metro-launch:hover{background:var(--amber);color:#fff;}
 </style>
 </head>
 <body>
@@ -184,6 +206,24 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 <main class="wrap" id="main"></main>
 <div class="scrim" id="scrim" onclick="closeDetail()"></div>
 <div class="detail" id="detail"><div class="d-close"><span id="dCrumb">Lesson</span><button onclick="closeDetail()">✕ Close</button></div><div class="d-body" id="dBody"></div></div>
+<div class="metro">
+  <div class="metro-panel" id="metroPanel">
+    <div class="metro-row">
+      <div class="metro-bpm-big"><span id="metroBpm">80</span><em>bpm</em></div>
+      <div class="metro-beats"><div class="metro-dot accent"></div><div class="metro-dot"></div><div class="metro-dot"></div><div class="metro-dot"></div></div>
+    </div>
+    <div class="metro-row" style="margin-top:12px">
+      <button class="metro-btn sm" onclick="Metro.nudge(-1)" aria-label="slower">–</button>
+      <input type="range" class="metro-slider" id="metroSlider" min="40" max="200" value="80" oninput="Metro.setBpm(this.value)">
+      <button class="metro-btn sm" onclick="Metro.nudge(1)" aria-label="faster">+</button>
+    </div>
+    <div class="metro-row" style="margin-top:12px;gap:8px">
+      <button class="metro-btn primary grow" onclick="Metro.toggle()"><span id="metroStartIcon">▶</span> <span id="metroStartTxt">Start</span></button>
+      <button class="metro-btn grow" onclick="Metro.tap()">Tap tempo</button>
+    </div>
+  </div>
+  <button class="metro-fab" id="metroFab" onclick="Metro.fab()" aria-label="Metronome">⏱</button>
+</div>
 <div class="toast" id="toast"></div>
 <script>
 const MODULES=[
@@ -356,7 +396,7 @@ function openLesson(id,keep){const __det=document.getElementById('detail');const
  if(statusOf(id)==='locked')return;
  curId=id;const l=lessonById(id);const s=st(id);const mod=MODULES.find(m=>m.lessons.some(x=>x.id===id));
  document.getElementById('dCrumb').textContent='Module '+mod.n+' \u00B7 '+(l.cp?'Checkpoint':'Lesson '+id);
- const meta=(l.tempo&&l.tempo!=='\u2014'?'<span class="chip tempo">\u266A '+l.tempo+'</span>':'')+(l.covers?'<span class="chip '+(l.cp?'cp':'covers')+'">'+l.covers+'</span>':'');
+ const meta=(l.tempo&&l.tempo!=='\u2014'?'<button class="chip tempo metro-launch" onclick="Metro.start('+parseInt(l.tempo,10)+')" title="Start metronome at this tempo">\u266A '+l.tempo+' \u00B7 click</button>':'')+(l.covers?'<span class="chip '+(l.cp?'cp':'covers')+'">'+l.covers+'</span>':'');
  let h='<div class="d-title">'+l.t+'</div><div class="d-focus">'+l.f+'</div><div class="d-meta">'+meta+'</div>';
  if(l.cp){
   h+='<div class="d-section"><div class="d-h cp">What to record</div>'+l.rec.map(r=>'<div class="item"><div class="item-text">'+r+'</div></div>').join('')+'</div>';
@@ -439,13 +479,12 @@ function renderRef(){
   {n:'C#m',s:'barre \u00B7 fr4',d:chordSVG([[2,6],[3,6],[4,5]],[],[0],{fret:4,from:1,to:5})},
   {n:'F',s:'barre \u00B7 fr1',d:chordSVG([[1,3],[2,3],[3,2]],[],[],{fret:1,from:0,to:5})},
   {n:'C',s:'bridge (C key)',d:chordSVG([[1,3],[2,2],[4,1]],[3,5],[0])},
-  {n:'Dm',s:'bridge (C key)',d:chordSVG([[3,2],[5,1],[4,3]],[2],[0,1])},
  ];
  const road=[
   {t:'Intro',c:'',b:'Key A. Percussive muted strum + open-string figure. <b>A \u00B7 Bm7</b>'},
   {t:'Verses',c:'',b:'Key A, picking + strum with melody on top. <b>A \u00B7 D \u00B7 Bm7 \u00B7 #Cm</b>'},
   {t:'Choruses',c:'',b:'Key A, driving strum, three barres in a row. <b>D \u00B7 E \u00B7 A \u00B7 #Cm \u00B7 #Fm \u00B7 Bm</b>'},
-  {t:'Bridge',c:'c',b:'Modulates up \u2014 转1=C调. New shapes: <b>C \u00B7 F \u00B7 G \u00B7 Am \u00B7 Dm \u00B7 E</b>'},
+  {t:'Bridge',c:'c',b:'Modulates up \u2014 转1=C调. New shapes: <b>C \u00B7 F \u00B7 G \u00B7 Am \u00B7 D \u00B7 E</b>'},
   {t:'Return',c:'c',b:'Modulates back \u2014 转1=A调, into the back-half choruses.'},
   {t:'Back-half',c:'',b:'Key A choruses, escalating. <b>#Cm \u00B7 #Fm \u00B7 Bm \u00B7 D \u00B7 E</b>'},
   {t:'Climax',c:'peak',b:'Full intensity, then a controlled drop into the outro.'},
@@ -471,7 +510,52 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 function doExport(){const blob=new Blob([JSON.stringify({lessons:S,exported:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ruyan-mastery-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();showToast('Backup downloaded');}
 function doImport(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.lessons){S=d.lessons;persist();render();showToast('Progress restored');}}catch(e){showToast('Could not read that file');}};r.readAsText(f);ev.target.value='';}
 function doReset(){if(!confirm('Erase all progress and start the path fresh? Export a backup first if unsure.'))return;S={};persist();render();showToast('Progress reset');}
+/* ---- metronome: Web Audio click with a look-ahead scheduler ---- */
+const Metro=(function(){
+ let ac=null,timer=null,nextT=0,beat=0,BPM=80,BEATS=4,on=false,taps=[];
+ const KEY='ruyan_metro_bpm';
+ function ctx(){if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();return ac;}
+ function clamp(v){return Math.max(40,Math.min(200,Math.round(v)));}
+ function click(t,accent){
+  const c=ctx();const o=c.createOscillator(),g=c.createGain();
+  o.type='square';o.frequency.value=accent?1600:1050;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(accent?0.5:0.3,t+0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+0.045);
+  o.connect(g).connect(c.destination);o.start(t);o.stop(t+0.06);
+ }
+ function flash(i){const d=document.querySelectorAll('.metro-dot');d.forEach((el,k)=>el.classList.toggle('beat',k===i));}
+ function sched(){const c=ctx();
+  while(nextT<c.currentTime+0.13){
+   const i=beat%BEATS;click(nextT,i===0);
+   setTimeout(()=>{if(on)flash(i);},Math.max(0,(nextT-c.currentTime)*1000));
+   nextT+=60/BPM;beat++;
+  }}
+ function ui(){
+  const b=document.getElementById('metroBpm');if(b)b.textContent=BPM;
+  const s=document.getElementById('metroSlider');if(s&&+s.value!==BPM)s.value=BPM;
+  const ic=document.getElementById('metroStartIcon');if(ic)ic.textContent=on?'⏸':'▶';
+  const tx=document.getElementById('metroStartTxt');if(tx)tx.textContent=on?'Stop':'Start';
+  const fab=document.getElementById('metroFab');if(fab){fab.classList.toggle('on',on);fab.style.animationDuration=(60/BPM)+'s';}
+ }
+ function start(b){const c=ctx();c.resume();if(b)BPM=clamp(b);
+  if(!on){on=true;beat=0;nextT=c.currentTime+0.08;timer=setInterval(sched,25);}
+  openPanel(true);ui();persist();}
+ function stop(){on=false;if(timer)clearInterval(timer);timer=null;document.querySelectorAll('.metro-dot').forEach(d=>d.classList.remove('beat'));ui();}
+ function toggle(){on?stop():start();}
+ function setBpm(v){BPM=clamp(v);ui();persist();}
+ function nudge(d){setBpm(BPM+d);}
+ function tap(){const now=Date.now();taps=taps.filter(t=>now-t<2000);taps.push(now);
+  if(taps.length>=2){let sum=0;for(let i=1;i<taps.length;i++)sum+=taps[i]-taps[i-1];setBpm(60000/(sum/(taps.length-1)));}}
+ function openPanel(force){const p=document.getElementById('metroPanel');if(!p)return;force?p.classList.add('open'):p.classList.toggle('open');}
+ function fab(){openPanel();}
+ function persist(){if(OK)try{localStorage.setItem(KEY,String(BPM));}catch(e){}}
+ function load(){if(OK)try{const v=parseInt(localStorage.getItem(KEY),10);if(v)BPM=clamp(v);}catch(e){}}
+ return {start,stop,toggle,setBpm,nudge,tap,fab,openPanel,load,ui,get bpm(){return BPM;}};
+})();
+
 init();
+Metro.load();Metro.ui();
 (function(){for(const m of MODULES){if(m.lessons.some(l=>!isMastered(l.id))){view=m.n;break;}}})();
 render();
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
