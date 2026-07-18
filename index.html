@@ -196,7 +196,7 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 .player-head .ph-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .player-head .ph-sub{font-size:0.62rem;color:var(--muted);font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:6px;}
 .player-head button{flex:none;border:1.5px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:var(--radius-sm);padding:7px 14px;font-family:inherit;font-weight:700;font-size:0.72rem;cursor:pointer;}
-.player-modal iframe{flex:1;width:100%;border:none;background:#0f1115;}
+.player-modal #playerBody{flex:1;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#0f1115;}
 /* ---- strum-pattern strip (from shared RUYAN_STRUM) ---- */
 .ss{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:var(--surface);max-width:360px;}
 .ss-slot{flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 0 4px;min-height:46px;border-left:1px solid var(--surface2);}
@@ -256,10 +256,11 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
     <span class="ph-title"><span id="playerTitle">Section</span><span class="ph-sub" id="playerSub"></span></span>
     <button onclick="closePlayer()">✕ Close</button>
   </div>
-  <iframe id="playerFrame" title="Sheet Player" allow="autoplay"></iframe>
+  <div id="playerBody"></div>
 </div>
 <div class="toast" id="toast"></div>
 <script src="ruyan-song.js"></script>
+<script src="player.js"></script>
 <script>
 const MODULES=[
 {n:1,t:'The Barre Foundation',g:'This version is played in A with no capo, so it lives on barre chords. Build them first — every section below depends on a clean, reliable barre.',lessons:[
@@ -553,17 +554,18 @@ const SECTION_MAP={
 function hearSection(id){
   const m=SECTION_MAP[id]; if(!m) return;
   const l=lessonById(id); const bpm=parseInt(l.tempo,10)||76;
-  const hash='#section='+encodeURIComponent(m.from)+(m.to?'&to='+encodeURIComponent(m.to):'')
-            +'&bpm='+bpm+'&chordsOnly=1&loop=1&embed=1';
-  document.getElementById('playerFrame').src='player/index.html'+hash;
   document.getElementById('playerTitle').textContent=l.t;
-  document.getElementById('playerSub').textContent='▶ press Play · '+bpm+' bpm · chords · loop';
+  document.getElementById('playerSub').textContent=bpm+' bpm · chords · loop';
   document.getElementById('playerModal').classList.add('open');
   document.body.style.overflow='hidden';
+  // mount the player INLINE (no iframe) and play the section. This runs inside the
+  // button's click, so it's a real user gesture -> audio autostarts (one tap).
+  SheetPlayer.mount(document.getElementById('playerBody'), {embed:true});
+  SheetPlayer.play({section:m.from, to:m.to, bpm:bpm, chordsOnly:1, loop:1, autoplay:1});
 }
 function closePlayer(){
   document.getElementById('playerModal').classList.remove('open');
-  document.getElementById('playerFrame').src='about:blank';   // tears down the iframe -> stops audio
+  if(window.SheetPlayer) SheetPlayer.unmount();   // stops audio + clears the mount
   document.body.style.overflow='';
 }
 

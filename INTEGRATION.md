@@ -108,8 +108,11 @@ Now a learner on "Chorus 1" taps once and hears exactly that section's accompani
 - **Strum display (fixes review gap #3) — done:** `STRUM` moved into the shared `ruyan-song.js` (`window.RUYAN_STRUM`); the player strums from it and the Mastery Path renders a `↓ / ↑ / ×` strip on a 16-slot beat grid from the same data. Shown in Module 3's strumming lessons (3.1 ballad, 3.2/3.3 muted, 8.1 ring) and as a full "Strum patterns" card in the Reference tab. No more "read the arrows in your tab." Verified: strips render, the ballad gallop reads `↓·↓↑` per beat matching the player.
 - **Chord chips ↔ diagrams (still open):** make each chord in the player's chip line link to this app's diagram for that chord. (Road-map progressions already derive from `SONG.sections` as of Phase 1.)
 
-### Phase 5 — optional full merge
-Inline the player's audio + render module directly into this PWA so it's one offline app (one service worker, one install). More work; do it only once Phases 1–4 prove the UX.
+### Phase 5 — full inline — **done**
+The player is now a mountable module, `player.js` (`window.SheetPlayer`), vendored here from the canonical sheet-player repo. "Hear this section" **mounts it inline** into the modal (`SheetPlayer.mount(#playerBody,{embed:true})` → `SheetPlayer.play({section,to,bpm,chordsOnly,loop,autoplay})`) — **no iframe**. All the player's CSS is scoped under a `.sp` root class, so there's no style/variable bleed either way (verified: player renders its dark theme inside the modal; Ru-Yan's header stays light).
+- **One-tap play:** because the mount+play run inside the "Hear this section" click (a real gesture in the main document), audio autostarts — no second "Play" tap.
+- Close calls `SheetPlayer.unmount()` (stops audio, clears the container). The obsolete `player/` iframe bundle was removed. SW cache → v10.
+- Data + engine are both shared: `ruyan-song.js` (song/strum/chords) + `player.js` (engine) — one copy each, both apps.
 
 ---
 
