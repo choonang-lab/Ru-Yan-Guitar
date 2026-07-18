@@ -57,6 +57,13 @@
   #secjump button{padding:4px 9px;font-size:12px}
   body.embed .embed-hide{display:none!important}   /* embed mode (framed / #embed=1): hide authoring UI */
   body.embed header{padding:10px 18px}
+  .chord-chip{cursor:pointer}
+  .chord-chip:hover{border-color:var(--accent)}
+  #chordpop{display:none;position:fixed;z-index:60;background:#fff;color:#1C1B18;border:1px solid #cfcfcf;
+            border-radius:10px;padding:7px 9px 5px;box-shadow:0 10px 34px rgba(0,0,0,.45)}
+  #chordpop .cpn{font-weight:800;font-family:ui-monospace,Menlo,monospace;text-align:center;font-size:14px;margin-bottom:2px}
+  #chordpop .cps{font-size:10px;color:#8C8A84;text-align:center;margin-top:2px}
+  #chordpop svg{width:70px;height:86px;display:block;margin:0 auto}
 </style>
 </head>
 <body>
@@ -127,6 +134,7 @@
     </details>
   </div>
 </main>
+<div id="chordpop"></div>
 
 <script src="../ruyan-song.js"></script>
 <script>
@@ -312,7 +320,10 @@ function render(song){
     h.innerHTML=`<b>${sec.name}</b>` + (sec.key?`<span class="kb">1=${sec.key}</span>`:"");
     wrap.appendChild(h);
     const cl=document.createElement("div"); cl.className="chordline";
-    sec.chords.forEach(c=>{const s=document.createElement("span");s.className="chip";s.textContent=`${c[0]}·${c[1]}`;cl.appendChild(s);});
+    sec.chords.forEach(c=>{const s=document.createElement("span");s.className="chip";
+      const hasDia=(window.RUYAN_CHORDS&&window.RUYAN_CHORDS[c[0]]);
+      if(hasDia){ s.classList.add("chord-chip"); s.onclick=e=>{e.stopPropagation();showChordPop(c[0],s);}; }
+      s.textContent=`${c[0]}·${c[1]}`;cl.appendChild(s);});
     wrap.appendChild(cl);
     const sc=document.createElement("div"); sc.className="score";
     let beatAcc=0;
@@ -407,6 +418,19 @@ function play(song, fromSec, opts){
     else stop();
   }, tailMs));
 }
+function showChordPop(name, el){                     // tap a chord chip -> its fingering diagram
+  const pop=document.getElementById("chordpop");
+  const svg=window.chordDiagramSVG?window.chordDiagramSVG(name):"";
+  if(!svg){ pop.style.display="none"; return; }
+  const sub=(window.RUYAN_CHORDS&&window.RUYAN_CHORDS[name]&&window.RUYAN_CHORDS[name].sub)||"";
+  pop.innerHTML='<div class="cpn">'+name+'</div>'+svg+(sub?'<div class="cps">'+sub+'</div>':"");
+  pop.style.display="block";
+  const r=el.getBoundingClientRect(), pw=pop.offsetWidth||90, ph=pop.offsetHeight||120;
+  let left=Math.min(r.left, window.innerWidth-pw-6);
+  let top=r.bottom+6; if(top+ph>window.innerHeight) top=r.top-ph-6;
+  pop.style.left=Math.max(6,left)+"px"; pop.style.top=Math.max(6,top)+"px";
+}
+document.addEventListener("click", ()=>{ const p=document.getElementById("chordpop"); if(p) p.style.display="none"; });
 function highlight(gi){
   document.querySelectorAll(".note.on").forEach(e=>e.classList.remove("on"));
   const el=document.querySelector(`.note[data-i="${gi}"]`);
