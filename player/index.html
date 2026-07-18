@@ -251,27 +251,7 @@ function pluck(freq,t,dur,gainv,muted){                          // dispatcher: 
 }
 
 /* ---------- strumming ---------- */
-// one bar (4 beats) of strokes: p=beat offset, d='D'(low→high)/'U'(high→low), m=muted/percussive
-const STRUM = {
-  // intro/间奏 groove: open A chord rings in the first half (beats 1-2, let-ring), muted "chk" in the
-  // second half, each bar tagged with an up-down (↑↓) — read off the close crop
-  muted:  [{p:0,d:"D",m:0},{p:0.5,d:"U",m:1},{p:1,d:"D",m:0},{p:1.5,d:"U",m:1},
-           {p:2,d:"D",m:1},{p:2.5,d:"U",m:1},{p:3,d:"U",m:1},{p:3.5,d:"D",m:1}],
-  // verse/chorus: 16th-note gallop — "♪♬" per beat (down on beat, down-up on the 16ths) — read off page-2 TAB
-  ballad: [{p:0,d:"D",m:0},{p:0.5,d:"D",m:0},{p:0.75,d:"U",m:0},
-           {p:1,d:"D",m:0},{p:1.5,d:"D",m:0},{p:1.75,d:"U",m:0},
-           {p:2,d:"D",m:0},{p:2.5,d:"D",m:0},{p:2.75,d:"U",m:0},
-           {p:3,d:"D",m:0},{p:3.5,d:"D",m:0},{p:3.75,d:"U",m:0}],
-  // pre-ending palm-mute chop (能听见 我不要告别): chord on the beat, muted "chk" on the 16ths
-  chop:   [{p:0,d:"D",m:0},{p:0.5,d:"D",m:1},{p:0.75,d:"U",m:1},
-           {p:1,d:"D",m:0},{p:1.5,d:"D",m:1},{p:1.75,d:"U",m:1},
-           {p:2,d:"D",m:0},{p:2.5,d:"D",m:1},{p:2.75,d:"U",m:1},
-           {p:3,d:"D",m:0},{p:3.5,d:"D",m:1},{p:3.75,d:"U",m:1}],
-  // final 已经如烟: one slow arpeggiated roll per bar, let ring
-  ring:   [{p:0,d:"D",m:0,r:1}],
-  // gentle let-ring for pre-chorus lead-ins & the held bridge tail — sparse down-up quarters
-  soft:   [{p:0,d:"D",m:0},{p:1,d:"U",m:0},{p:2,d:"D",m:0},{p:3,d:"U",m:0}]
-};
+// STRUM patterns now live in the shared ruyan-song.js (window.RUYAN_STRUM / global STRUM)
 function guitarVoicing(name){                       // spread the chord across ~6 "strings" low→high
   const b=chordNotes(name); if(!b.length) return [];
   const r=b[0]; return [r-12].concat(b,[r+12]).sort((x,y)=>x-y);

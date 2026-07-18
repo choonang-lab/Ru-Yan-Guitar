@@ -104,9 +104,9 @@ function hearSection(id){
 ```
 Now a learner on "Chorus 1" taps once and hears exactly that section's accompaniment loop at 80 BPM, while reading the standards to pass.
 
-### Phase 4 — surface what the player already knows
-- **Strum display (fixes review gap #3):** the player's `STRUM` object encodes down/up/muted per beat. Render it as a `↓ ↓↑ ↓ ↓↑` / `×` strip in Module 3's strumming lessons, pulled from the shared data — no more "read the arrows in your tab."
-- **Chord chips ↔ diagrams:** make each chord in the player's chip line link to this app's diagram for that chord, and each progression in the road map pull its exact order from `SONG.sections`.
+### Phase 4 — surface what the player already knows — **strum display done**
+- **Strum display (fixes review gap #3) — done:** `STRUM` moved into the shared `ruyan-song.js` (`window.RUYAN_STRUM`); the player strums from it and the Mastery Path renders a `↓ / ↑ / ×` strip on a 16-slot beat grid from the same data. Shown in Module 3's strumming lessons (3.1 ballad, 3.2/3.3 muted, 8.1 ring) and as a full "Strum patterns" card in the Reference tab. No more "read the arrows in your tab." Verified: strips render, the ballad gallop reads `↓·↓↑` per beat matching the player.
+- **Chord chips ↔ diagrams (still open):** make each chord in the player's chip line link to this app's diagram for that chord. (Road-map progressions already derive from `SONG.sections` as of Phase 1.)
 
 ### Phase 5 — optional full merge
 Inline the player's audio + render module directly into this PWA so it's one offline app (one service worker, one install). More work; do it only once Phases 1–4 prove the UX.

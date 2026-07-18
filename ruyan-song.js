@@ -1,7 +1,7 @@
 /* ============================================================================
-   ruyan-song.js — shared song data for 如烟 (王一编配).
-   VENDORED MIRROR. The canonical copy lives in the sheet-player repo; edit it
-   THERE, then re-copy here. Never restate chords/sections elsewhere in this app.
+   ruyan-song.js — CANONICAL shared song data for 如烟 (王一编配).
+   Single source of truth. Both the Sheet Player and the Mastery Path load THIS.
+   Edit chords / sections / strum here ONLY — never restate them elsewhere.
    Note format: [degree 1-7 (0=rest), octave offset, beats, lyric].
    Chord format: [name, beats]. Section.key overrides song.key.
    ============================================================================ */
@@ -152,5 +152,29 @@ SONG.sections=[
   {name:"已经如烟 (roll, let ring)", chords:[["Bm7",4],["D",4],["A",4]], strum:"ring", mel:M_OUTRO.slice(29)}
 ];
 
+/* ---------- strum patterns (shared) ----------
+   One bar (4 beats) of strokes: p=beat offset, d='D'(low→high)/'U'(high→low),
+   m=muted/percussive, r=roll. section.strum picks a pattern by name. */
+const STRUM = {
+  // intro/间奏 groove: open A rings the first half (beats 1-2, let-ring), muted "chk" the second half,
+  // each bar tagged with an up-down (↑↓) — read off the close crop
+  muted:  [{p:0,d:"D",m:0},{p:0.5,d:"U",m:1},{p:1,d:"D",m:0},{p:1.5,d:"U",m:1},
+           {p:2,d:"D",m:1},{p:2.5,d:"U",m:1},{p:3,d:"U",m:1},{p:3.5,d:"D",m:1}],
+  // verse/chorus: 16th-note gallop — "♪♬" per beat (down on beat, down-up on the 16ths) — read off page-2 TAB
+  ballad: [{p:0,d:"D",m:0},{p:0.5,d:"D",m:0},{p:0.75,d:"U",m:0},
+           {p:1,d:"D",m:0},{p:1.5,d:"D",m:0},{p:1.75,d:"U",m:0},
+           {p:2,d:"D",m:0},{p:2.5,d:"D",m:0},{p:2.75,d:"U",m:0},
+           {p:3,d:"D",m:0},{p:3.5,d:"D",m:0},{p:3.75,d:"U",m:0}],
+  // pre-ending palm-mute chop (能听见 我不要告别): chord on the beat, muted "chk" on the 16ths
+  chop:   [{p:0,d:"D",m:0},{p:0.5,d:"D",m:1},{p:0.75,d:"U",m:1},
+           {p:1,d:"D",m:0},{p:1.5,d:"D",m:1},{p:1.75,d:"U",m:1},
+           {p:2,d:"D",m:0},{p:2.5,d:"D",m:1},{p:2.75,d:"U",m:1},
+           {p:3,d:"D",m:0},{p:3.5,d:"D",m:1},{p:3.75,d:"U",m:1}],
+  // final 已经如烟: one slow arpeggiated roll per bar, let ring
+  ring:   [{p:0,d:"D",m:0,r:1}],
+  // gentle let-ring for pre-chorus lead-ins & the held bridge tail — sparse down-up quarters
+  soft:   [{p:0,d:"D",m:0},{p:1,d:"U",m:0},{p:2,d:"D",m:0},{p:3,d:"U",m:0}]
+};
+
 /* expose for both apps (classic-script global + explicit handle) */
-if (typeof window !== 'undefined') window.RUYAN_SONG = SONG;
+if (typeof window !== 'undefined'){ window.RUYAN_SONG = SONG; window.RUYAN_STRUM = STRUM; }

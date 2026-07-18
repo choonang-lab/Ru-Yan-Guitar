@@ -197,6 +197,23 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 .player-head .ph-sub{font-size:0.62rem;color:var(--muted);font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:6px;}
 .player-head button{flex:none;border:1.5px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:var(--radius-sm);padding:7px 14px;font-family:inherit;font-weight:700;font-size:0.72rem;cursor:pointer;}
 .player-modal iframe{flex:1;width:100%;border:none;background:#0f1115;}
+/* ---- strum-pattern strip (from shared RUYAN_STRUM) ---- */
+.ss{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:var(--surface);max-width:360px;}
+.ss-slot{flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 0 4px;min-height:46px;border-left:1px solid var(--surface2);}
+.ss-slot.beat{border-left:1px solid var(--border2);}
+.ss-slot:first-child{border-left:none;}
+.ss-g{font-size:1.05rem;font-weight:800;line-height:1;height:17px;}
+.ss-g.dn{color:var(--text);}
+.ss-g.up{color:var(--muted);}
+.ss-g.mut{color:var(--red);}
+.ss-g.roll{color:var(--accent);}
+.ss-b{font-size:0.58rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:auto;padding-top:4px;}
+.ss-legend{font-size:0.68rem;color:var(--muted);margin-top:7px;line-height:1.5;}
+.ss-legend .x{color:var(--red);}
+.strum-item{padding:11px 0;border-bottom:1px solid var(--border);}
+.strum-item:last-child{border-bottom:none;}
+.strum-hd{font-size:0.82rem;margin-bottom:6px;}
+.strum-hd b{color:var(--text);} .strum-hd span{color:var(--muted);font-size:0.74rem;}
 </style>
 </head>
 <body>
@@ -417,6 +434,7 @@ function openLesson(id,keep){const __det=document.getElementById('detail');const
  const meta=(l.tempo&&l.tempo!=='\u2014'?'<button class="chip tempo metro-launch" onclick="Metro.start('+parseInt(l.tempo,10)+')" title="Start metronome at this tempo">\u266A '+l.tempo+' \u00B7 click</button>':'')+(l.covers?'<span class="chip '+(l.cp?'cp':'covers')+'">'+l.covers+'</span>':'');
  const hear=(!l.cp&&typeof SECTION_MAP!=='undefined'&&SECTION_MAP[l.id])?'<button class="hear-btn" onclick="hearSection(\''+l.id+'\')" title="Play this section, looped, chords only">▶ Hear this section</button>':'';
  let h='<div class="d-title">'+l.t+'</div><div class="d-focus">'+l.f+'</div><div class="d-meta">'+meta+hear+'</div>';
+ if(!l.cp && typeof LESSON_STRUM!=='undefined' && LESSON_STRUM[l.id]) h+=strumBlock(LESSON_STRUM[l.id]);
  if(l.cp){
   h+='<div class="d-section"><div class="d-h cp">What to record</div>'+l.rec.map(r=>'<div class="item"><div class="item-text">'+r+'</div></div>').join('')+'</div>';
   h+='<div class="d-section"><div class="cp-note">\uD83D\uDCE4 <b>Send the recording to Claude in chat.</b> I will analyse timing, tempo steadiness, dynamics and note clarity, and review any hand-position photos \u2014 then give specific feedback. Paste the key points below so this checkpoint keeps a record.</div></div>';
@@ -519,6 +537,8 @@ function renderRef(){
  return '<div class="mod-head"><div class="mtag">Reference</div><h2>Chords & Road Map</h2><p>The 王一编配 arrangement, key of A, no capo. These are the real shapes \u2014 barres included. The chord progressions live in your tab; this is the orientation.</p></div>'+
  '<div class="bcard"><div class="bcard-title">The shapes</div><div class="bcard-sub">no capo \u00B7 \u25EF open \u00B7 \u00D7 muted \u00B7 green bar = barre \u00B7 Nfr = start fret</div><div class="chord-grid">'+C.map(c=>'<div class="chord-box"><div class="cname">'+c.n+'</div>'+c.d+'<div class="csub">'+c.s+'</div></div>').join('')+'</div><p style="font-size:0.74rem;color:var(--muted);margin-top:12px;line-height:1.5">Five barre chords (Bm, Bm7, F#m, C#m, F) carry this version \u2014 Module 1 builds them. <b>Bm7</b> is the lighter stand-in for Bm while the barre develops.</p></div>'+
  '<div class="bcard"><div class="bcard-title">The road map</div><div class="bcard-sub">A \u2192 C \u2192 A, through-composed</div><div class="road">'+road.map(r=>'<div class="road-row"><span class="road-tag '+r.c+'">'+r.t+'</span><span class="road-body">'+(r.d+(r.p?fmtChords(chordsWhere(r.p)):''))+'</span></div>').join('')+'</div></div>'+
+ '<div class="bcard"><div class="bcard-title">Strum patterns</div><div class="bcard-sub">↓ down · ↑ up · × muted chick · one bar = 4 beats</div>'+
+ ['muted','ballad','soft','chop','ring'].map(function(pn){var info=STRUM_INFO[pn]||{};return '<div class="strum-item"><div class="strum-hd"><b>'+(info.label||pn)+'</b> <span>'+(info.use||'')+'</span></div>'+strumStrip(pn)+'</div>';}).join('')+'</div>'+
  '<div class="bcard"><div class="bcard-title">What makes this version hard</div><div class="bcard-sub">why the modules are ordered this way</div><ul><li>No capo \u2014 it lives on barre chords, so the barre is the first gate</li><li>Three barres in a row in the chorus (C#m \u2013 F#m \u2013 Bm)</li><li>Two key changes: up to C for the bridge, back to A after</li><li>Melody notes sit on top of the strum in the verses</li><li>A percussive muted-strum groove opens the song</li></ul></div>';
 }
 function renderProg(){
@@ -573,6 +593,34 @@ function closePlayer(){
   document.getElementById('playerModal').classList.remove('open');
   document.getElementById('playerFrame').src='about:blank';   // tears down the iframe -> stops audio
   document.body.style.overflow='';
+}
+
+/* ---- strum-pattern strip (Phase 4): rendered from the shared RUYAN_STRUM ---- */
+const STRUM_INFO={
+  muted:{label:'Muted groove',use:'Intro & 间奏 — open A rings, then muted chicks'},
+  ballad:{label:'16th gallop',use:'Verses & choruses — the main driving pattern'},
+  soft:{label:'Soft quarters',use:'Pre-chorus lead-ins & bridge tail — let ring'},
+  chop:{label:'Palm-mute chop',use:'能听见 我不要告别 — chord on the beat, muted 16ths'},
+  ring:{label:'Arpeggiated roll',use:'已经如烟 — one slow roll per bar, let ring'}
+};
+const LESSON_STRUM={'3.1':'ballad','3.2':'muted','3.3':'muted','8.1':'ring'};
+function strumStrip(name){
+  const S=(window.RUYAN_STRUM||{})[name]; if(!S) return '';
+  const bySlot={}; S.forEach(s=>{ bySlot[Math.round(s.p*4)]=s; });   // 16 sixteenth-slots per 4/4 bar
+  let cells='';
+  for(let i=0;i<16;i++){
+    const s=bySlot[i], beat=(i%4===0);
+    let g='',cls='';
+    if(s){ if(s.r){g='↓';cls='roll';} else if(s.m){g='×';cls='mut';} else if(s.d==='D'){g='↓';cls='dn';} else {g='↑';cls='up';} }
+    cells+='<div class="ss-slot'+(beat?' beat':'')+'"><span class="ss-g '+cls+'">'+g+'</span><span class="ss-b">'+(beat?(i/4+1):'')+'</span></div>';
+  }
+  return '<div class="ss">'+cells+'</div>';
+}
+function strumBlock(name){
+  const info=STRUM_INFO[name]||{};
+  return '<div class="d-section"><div class="d-h">Strum pattern — '+(info.label||name)+'</div>'+strumStrip(name)
+        +'<div class="ss-legend">↓ down · ↑ up · <span class="x">×</span> muted chick · numbers = beats.'
+        +(info.use?' '+info.use+'.':'')+'</div></div>';
 }
 /* ---- metronome: Web Audio click with a look-ahead scheduler ---- */
 const Metro=(function(){
