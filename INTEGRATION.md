@@ -131,3 +131,12 @@ The player is now a mountable module, `player.js` (`window.SheetPlayer`), vendor
 | 5 full inline merge | L | med | single PWA, best UX |
 
 Recommended order: **1 → 2 → 3 → 4**, stopping to test after each. Phase 1 alone is worth doing immediately regardless of the rest.
+
+### v11 — song-first redesign (Nov 2026)
+After the integration phases, a pedagogy review found the path was hard to keep up: 12 strictly
+gated lessons (6 of them barre chords) before any of the song, no daily plan, no practice-day
+record, and pass tempos (80–84) above the tab's 76. v11 rebuilt the path song-first on no-barre
+starter shapes with a parallel Barre gym, added Today's 10-minute session, tempo ladders to 76,
+streak + calendar, and moved the app to The Rebuild family look (shared with Vocal Harmony) with
+dark mode. Shared files gained the starter shapes and themeable chord diagrams; the player hides
+its section list in embed mode and keeps its Play button on the launched section. See CLAUDE.md.

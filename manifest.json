@@ -1,13 +1,13 @@
 {
-  "name": "如烟 · Guitar + Vocal Plan",
+  "name": "如烟 · Mastery Path",
   "short_name": "如烟",
-  "description": "12-week solo guitar + vocal plan for Mayday's 如烟 — capo 2, key A",
+  "description": "Learn the guitar accompaniment for Mayday’s 如烟 (王一编配, key A, no capo) — song first, ten minutes a day.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#1A6B45",
-  "background_color": "#EFEDE8",
+  "theme_color": "#2C6A5A",
+  "background_color": "#ECEEEA",
   "icons": [
     {
       "src": "icon-192.png",

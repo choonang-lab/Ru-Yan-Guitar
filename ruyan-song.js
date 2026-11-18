@@ -1,7 +1,7 @@
 /* ============================================================================
-   ruyan-song.js — CANONICAL shared song data for 如烟 (王一编配).
-   Single source of truth. Both the Sheet Player and the Mastery Path load THIS.
-   Edit chords / sections / strum here ONLY — never restate them elsewhere.
+   ruyan-song.js — shared song data for 如烟 (王一编配).
+   VENDORED MIRROR. The canonical copy lives in the sheet-player repo; edit it
+   THERE, then re-copy here. Never restate chords/sections elsewhere in this app.
    Note format: [degree 1-7 (0=rest), octave offset, beats, lyric].
    Chord format: [name, beats]. Section.key overrides song.key.
    ============================================================================ */
@@ -185,28 +185,34 @@ const CHORD_SHAPES={
   'E':{sub:'open',dots:[[1,2],[2,2],[3,1]],opens:[0,4,5]},
   'G':{sub:'open',dots:[[0,3],[1,2],[5,3]],opens:[2,3,4]},
   'Am':{sub:'open',dots:[[2,2],[3,2],[4,1]],opens:[1,5],muted:[0]},
-  'Bm7':{sub:'easy barre sub',dots:[[1,2],[3,2],[5,2]],opens:[2,4],muted:[0]},
+  'Bm7':{sub:'no barre',dots:[[1,2],[3,2],[5,2]],opens:[2,4],muted:[0]},
   'Bm':{sub:'barre · fr2',dots:[[2,4],[3,4],[4,3]],muted:[0],barre:{fret:2,from:1,to:5}},
   'F#m':{sub:'barre · fr2',dots:[[1,4],[2,4],[3,3]],barre:{fret:2,from:0,to:5}},
   'C#m':{sub:'barre · fr4',dots:[[2,6],[3,6],[4,5]],muted:[0],barre:{fret:4,from:1,to:5}},
   'F':{sub:'barre · fr1',dots:[[1,3],[2,3],[3,2]],barre:{fret:1,from:0,to:5}},
-  'C':{sub:'bridge (C key)',dots:[[1,3],[2,2],[4,1]],opens:[3,5],muted:[0]}
+  'C':{sub:'bridge (C key)',dots:[[1,3],[2,2],[4,1]],opens:[3,5],muted:[0]},
+  /* starter shapes: every barre chord in the song has a no-barre stand-in */
+  'F#m7':{sub:'no barre',dots:[[2,4],[3,2],[4,2]],opens:[5],muted:[0,1]},
+  'C#m7':{sub:'no barre',dots:[[1,4],[2,2],[3,1]],opens:[4,5],muted:[0]},
+  'Fmaj7':{sub:'no barre',dots:[[2,3],[3,2],[4,1]],opens:[5],muted:[0,1]}
 };
+/* Colours come from CSS classes (cd-grid, cd-nut, cd-fr, cd-dot, cd-open, cd-mute) so each
+   host app themes them, light or dark. Hosts MUST style these classes. */
 function chordSVG(dots,opens,muted,barre){
  const W=66,H=82,padX=9,padTop=18,gw=(W-padX*2)/5,fh=(H-padTop-8)/4;
  const fr=[].concat(dots.map(d=>d[1]),(barre?[barre.fret]:[])).filter(f=>f>0);
  const maxF=fr.length?Math.max.apply(null,fr):0;const minF=fr.length?Math.min.apply(null,fr):1;const base=maxF<=4?1:minF;
- let s='<svg viewBox="0 0 '+W+' '+H+'">';
- s+='<rect x="'+padX+'" y="'+padTop+'" width="'+(gw*5)+'" height="'+(fh*4)+'" fill="none" stroke="#B8B6B0" stroke-width="1"/>';
- for(let f=1;f<4;f++)s+='<line x1="'+padX+'" y1="'+(padTop+fh*f)+'" x2="'+(padX+gw*5)+'" y2="'+(padTop+fh*f)+'" stroke="#D0CEC8"/>';
- for(let g=1;g<5;g++)s+='<line x1="'+(padX+gw*g)+'" y1="'+padTop+'" x2="'+(padX+gw*g)+'" y2="'+(padTop+fh*4)+'" stroke="#D0CEC8"/>';
- if(base===1)s+='<rect x="'+padX+'" y="'+(padTop-3)+'" width="'+(gw*5)+'" height="3" fill="#1C1B18"/>';
- else s+='<text x="'+(W-2)+'" y="'+(padTop+9)+'" font-size="8" text-anchor="end" fill="#8C8A84" font-family="monospace">'+base+'fr</text>';
+ let s='<svg class="cd" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">';
+ s+='<rect class="cd-grid" x="'+padX+'" y="'+padTop+'" width="'+(gw*5)+'" height="'+(fh*4)+'" fill="none" stroke-width="1"/>';
+ for(let f=1;f<4;f++)s+='<line class="cd-grid" x1="'+padX+'" y1="'+(padTop+fh*f)+'" x2="'+(padX+gw*5)+'" y2="'+(padTop+fh*f)+'" stroke-width="1"/>';
+ for(let g=1;g<5;g++)s+='<line class="cd-grid" x1="'+(padX+gw*g)+'" y1="'+padTop+'" x2="'+(padX+gw*g)+'" y2="'+(padTop+fh*4)+'" stroke-width="1"/>';
+ if(base===1)s+='<rect class="cd-nut" x="'+padX+'" y="'+(padTop-3)+'" width="'+(gw*5)+'" height="3"/>';
+ else s+='<text class="cd-fr" x="'+(W-2)+'" y="'+(padTop+9)+'" font-size="8" text-anchor="end" font-family="monospace">'+base+'fr</text>';
  const rel=f=>f-base+1;
- if(barre)s+='<rect x="'+(padX+gw*barre.from-5)+'" y="'+(padTop+fh*(rel(barre.fret)-0.5)-5)+'" width="'+(gw*(barre.to-barre.from)+10)+'" height="10" rx="5" fill="#1A6B45"/>';
- (opens||[]).forEach(t=>s+='<circle cx="'+(padX+gw*t)+'" cy="'+(padTop-8)+'" r="3" fill="none" stroke="#1A6B45" stroke-width="1.3"/>');
- (muted||[]).forEach(t=>s+='<text x="'+(padX+gw*t)+'" y="'+(padTop-5)+'" font-size="8" text-anchor="middle" fill="#9B2C2C" font-family="monospace">×</text>');
- (dots||[]).forEach(d=>s+='<circle cx="'+(padX+gw*d[0])+'" cy="'+(padTop+fh*(rel(d[1])-0.5))+'" r="5.5" fill="#1A6B45"/>');
+ if(barre)s+='<rect class="cd-dot" x="'+(padX+gw*barre.from-5)+'" y="'+(padTop+fh*(rel(barre.fret)-0.5)-5)+'" width="'+(gw*(barre.to-barre.from)+10)+'" height="10" rx="5"/>';
+ (opens||[]).forEach(t=>s+='<circle class="cd-open" cx="'+(padX+gw*t)+'" cy="'+(padTop-8)+'" r="3" fill="none" stroke-width="1.3"/>');
+ (muted||[]).forEach(t=>s+='<text class="cd-mute" x="'+(padX+gw*t)+'" y="'+(padTop-5)+'" font-size="8" text-anchor="middle" font-family="monospace">×</text>');
+ (dots||[]).forEach(d=>s+='<circle class="cd-dot" cx="'+(padX+gw*d[0])+'" cy="'+(padTop+fh*(rel(d[1])-0.5))+'" r="5.5"/>');
  return s+'</svg>';
 }
 function chordDiagramSVG(name){ const c=CHORD_SHAPES[name]; return c?chordSVG(c.dots,c.opens||[],c.muted||[],c.barre):''; }

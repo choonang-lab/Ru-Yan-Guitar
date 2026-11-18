@@ -22,6 +22,7 @@
 
 /* ---------- scoped styles (injected once) ---------- */
 const CSS = `
+/* defensive: hosts may define generic .card/.bar/.num — every rule below sets the props a host could leak */
 .sp{--bg:#0f1115;--panel:#171a21;--line:#262b36;--ink:#e8ecf3;--dim:#95a0b3;--accent:#6ea8fe;--hot:#ffd166;--good:#5fd39b;
     background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;display:block}
 .sp *{box-sizing:border-box}
@@ -29,7 +30,7 @@ const CSS = `
 .sp h1{font-size:17px;margin:0;font-weight:650}
 .sp header .sub{color:var(--dim);font-size:13px}
 .sp main{max-width:860px;margin:0 auto;padding:18px}
-.sp .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.sp .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 16px;box-shadow:none}
 .sp .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .sp button{background:#20242e;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 15px;font-size:14px;cursor:pointer;font-family:inherit}
 .sp button:hover{border-color:var(--accent)}
@@ -44,14 +45,14 @@ const CSS = `
 .sp .sec-h .kb{color:var(--good)}
 .sp .score{display:flex;flex-wrap:wrap;gap:4px 2px;line-height:1}
 .sp .note{display:inline-flex;flex-direction:column;align-items:center;min-width:24px;padding:6px 3px;border-radius:7px;transition:background .05s}
-.sp .note .num{font-size:19px;font-variant-numeric:tabular-nums;position:relative}
+.sp .note .num{font-size:19px;font-variant-numeric:tabular-nums;position:relative;background:none;border:0;min-height:0;padding:0;border-radius:0}
 .sp .note .num .dot{position:absolute;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--ink)}
 .sp .note .ly{font-size:13px;color:var(--dim);margin-top:6px;min-height:16px}
 .sp .note.rest .num{color:#3a4150}
 .sp .note.on{background:var(--hot)}
 .sp .note.on .num,.sp .note.on .ly{color:#0b0e14}
 .sp .note.on .num .dot{background:#0b0e14}
-.sp .bar{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
+.sp .bar{width:1px;height:auto;align-self:stretch;background:var(--line);margin:0 4px;border-radius:0}
 .sp .chordline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .sp .chip{background:#20242e;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:12px;color:var(--accent)}
 .sp textarea{width:100%;height:200px;background:#0b0e14;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:10px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
@@ -63,12 +64,14 @@ const CSS = `
 .sp #secjump button{padding:4px 9px;font-size:12px}
 .sp.embed .embed-hide{display:none!important}
 .sp.embed header{display:none}
+.sp.embed #secjump{display:none}
 .sp .chord-chip{cursor:pointer}
 .sp .chord-chip:hover{border-color:var(--accent)}
 .sp #chordpop{display:none;position:fixed;z-index:60;background:#fff;color:#1C1B18;border:1px solid #cfcfcf;border-radius:10px;padding:7px 9px 5px;box-shadow:0 10px 34px rgba(0,0,0,.45)}
 .sp #chordpop .cpn{font-weight:800;font-family:ui-monospace,Menlo,monospace;text-align:center;font-size:14px;margin-bottom:2px}
 .sp #chordpop .cps{font-size:10px;color:#8C8A84;text-align:center;margin-top:2px}
 .sp #chordpop svg{width:70px;height:86px;display:block;margin:0 auto}
+.sp #chordpop .cd-grid{stroke:#C9CFC9}.sp #chordpop .cd-nut{fill:#15191B}.sp #chordpop .cd-fr{fill:#61696E}.sp #chordpop .cd-dot{fill:#2C6A5A}.sp #chordpop .cd-open{stroke:#2C6A5A}.sp #chordpop .cd-mute{fill:#9B2C2C}
 `;
 
 /* ---------- markup injected into the mount container ---------- */
@@ -435,6 +438,8 @@ function playScoped(o){
   if((o.section!=null||o.index!=null) && !truthy(o.through)){
     let to=from; if(o.to!=null){ const j=sectionIndexByName(current,o.to); if(j>=0) to=j; }
     opts.toSec=Math.max(from,to);
+    $("#play").onclick=()=>playScoped(o);   // the player's own Play replays THIS scope, not the whole song
+    $("#play").textContent="▶ Play section";
   }
   play(current, from, opts);
 }
